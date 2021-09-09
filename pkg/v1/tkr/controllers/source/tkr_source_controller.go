@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	types2 "k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha4"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,7 +50,7 @@ type reconciler struct {
 }
 
 // Reconcile performs the reconciliation step
-func (r *reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	ctx, cancel := context.WithCancel(r.ctx)
 	defer cancel()
 
@@ -157,16 +157,16 @@ func AddToManager(ctx *mgrcontext.ControllerManagerContext, mgr ctrl.Manager) er
 func eventFilter(p func(eventMeta metav1.Object) bool) *predicate.Funcs {
 	return &predicate.Funcs{
 		CreateFunc: func(createEvent event.CreateEvent) bool {
-			return p(createEvent.Meta)
+			return p(createEvent.Object)
 		},
 		DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
-			return p(deleteEvent.Meta)
+			return p(deleteEvent.Object)
 		},
 		UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-			return p(updateEvent.MetaOld)
+			return p(updateEvent.ObjectOld)
 		},
 		GenericFunc: func(genericEvent event.GenericEvent) bool {
-			return p(genericEvent.Meta)
+			return p(genericEvent.Object)
 		},
 	}
 }
@@ -437,11 +437,11 @@ func (r *reconciler) SyncRelease(ctx context.Context) error {
 	return errors.Wrap(err, "failed to reconcile BOM ConfigMaps")
 }
 
-func (r *reconciler) initialReconcile(ticker *time.Ticker, stopChan <-chan struct{}, initialDiscoveryRetry int) {
+func (r *reconciler) initialReconcile(ticker *time.Ticker, ctx context.Context, initialDiscoveryRetry int) {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-stopChan:
+		case <-ctx.Done():
 			r.log.Info("Stop performing initial TKR discovery")
 			return
 		case <-ticker.C:
@@ -458,11 +458,11 @@ func (r *reconciler) initialReconcile(ticker *time.Ticker, stopChan <-chan struc
 	}
 }
 
-func (r *reconciler) tkrDiscovery(ticker *time.Ticker, stopChan <-chan struct{}) {
+func (r *reconciler) tkrDiscovery(ticker *time.Ticker, ctx context.Context) {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-stopChan:
+		case <-ctx.Done():
 			r.log.Info("Stop performing TKr discovery")
 			return
 		case <-ticker.C:
@@ -473,7 +473,7 @@ func (r *reconciler) tkrDiscovery(ticker *time.Ticker, stopChan <-chan struct{})
 	}
 }
 
-func (r *reconciler) Start(stopChan <-chan struct{}) error {
+func (r *reconciler) Start(ctx context.Context) error {
 	var err error
 	r.log.Info("Starting TanzuKubernetesReleaase Reconciler")
 
@@ -497,12 +497,12 @@ func (r *reconciler) Start(stopChan <-chan struct{}) error {
 
 	r.log.Info("Performing an initial release discovery")
 	ticker := time.NewTicker(r.options.InitialDiscoveryFrequency)
-	r.initialReconcile(ticker, stopChan, InitialDiscoveryRetry)
+	r.initialReconcile(ticker, ctx, InitialDiscoveryRetry)
 
 	r.log.Info("Initial TKr discovery completed")
 
 	ticker = time.NewTicker(r.options.ContinuousDiscoveryFrequency)
-	r.tkrDiscovery(ticker, stopChan)
+	r.tkrDiscovery(ticker, ctx)
 
 	r.log.Info("Stopping Tanzu Kubernetes releaase Reconciler")
 	return nil
