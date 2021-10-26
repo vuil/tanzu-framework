@@ -61,6 +61,11 @@ spec:
 status: {}
 #@ end
 
+#! This is the obvious place to start. The overlay corresponds very closely to
+#! the base-template.yaml which itself was derived from the upstream provider
+#! template. For that reason, CAPx topology customizations are heavily featured
+#! here.
+
 #@overlay/match by=overlay.subset({"kind":"Cluster"})
 ---
 apiVersion: cluster.x-k8s.io/v1alpha3
@@ -125,6 +130,8 @@ metadata:
 spec:
   template:
     spec:
+#! What's more most of the customizations involves direct field substitution
+#! with read inputs
       cloneMode:  #@ data.values.VSPHERE_CLONE_MODE
       datacenter: #@ data.values.VSPHERE_DATACENTER
       datastore: #@ data.values.VSPHERE_DATASTORE
@@ -137,6 +144,7 @@ spec:
         #@overlay/match by=overlay.index(0)
         #@overlay/replace
         - networkName: #@ data.values.VSPHERE_NETWORK
+#! ... and some occassional conditional checks
           #@ if data.values.CONTROL_PLANE_NODE_NAMESERVERS:
           nameservers: #@ data.values.CONTROL_PLANE_NODE_NAMESERVERS.replace(" ", "").split(",")
           #@ end

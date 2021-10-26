@@ -10,6 +10,7 @@ kind: MachineDeployment
 metadata:
   #@overlay/match missing_ok=True
   annotations:
+#! Again straightforward field substitution
     cluster.k8s.io/cluster-api-autoscaler-node-group-min-size: #@ "{}".format(data.values.AUTOSCALER_MIN_SIZE_0 or data.values.WORKER_MACHINE_COUNT_0)
     cluster.k8s.io/cluster-api-autoscaler-node-group-max-size: #@ "{}".format(data.values.AUTOSCALER_MAX_SIZE_0 or data.values.WORKER_MACHINE_COUNT_0)
 

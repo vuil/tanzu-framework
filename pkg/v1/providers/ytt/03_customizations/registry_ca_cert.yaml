@@ -11,6 +11,7 @@ spec:
   kubeadmConfigSpec:
     #@overlay/match missing_ok=True
     preKubeadmCommands:
+#! Some more complex data manipation and patching
       #@overlay/append
       - #@ "echo '[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"" + tkg_image_repo_hostname() + "\".tls]' >> /etc/containerd/config.toml"
       #@overlay/append
