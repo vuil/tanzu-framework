@@ -35,6 +35,9 @@ def write_test_cases(params_file, test_dir):
                     cmd_args.insert(0, v)
                 elif k == "_PLAN":
                     cmd_args.append('{} {}'.format("--plan", v))
+                    # hardcode to tkg-cluster-class-dev until we have enough to refactor
+                    cfg_args.append('{}: tkg-cluster-class-{}'.format("CLUSTER_CLASS", "dev"))
+                    #cfg_args.append('{}: tkg-cluster-class-{}'.format("CLUSTER_CLASS", v))
                 elif k == "_INFRA":
                     cmd_args.append('{} {}'.format("-i", v))
 
