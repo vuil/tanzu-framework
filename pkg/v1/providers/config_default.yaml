@@ -31,6 +31,8 @@ INFRASTRUCTURE_PROVIDER:
 #! be used instead
 CLUSTER_API_SERVER_PORT:
 
+CLUSTER_CLASS:
+
 #! Instance size configuration
 #! Instance size options available for vSphere are as follows:
 #!   vSphere: [extra-large,large,medium,small]
