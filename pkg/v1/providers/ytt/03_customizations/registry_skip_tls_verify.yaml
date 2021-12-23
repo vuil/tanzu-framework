@@ -1,8 +1,8 @@
 #@ load("@ytt:overlay", "overlay")
 #@ load("@ytt:data", "data")
-#@ load("/lib/helpers.star", "tkg_image_repo_customized", "tkg_image_repo_skip_tls_verify", "tkg_image_repo", "tkg_image_repo_hostname")
+#@ load("/lib/helpers.star", "tkg_image_repo_customized", "tkg_image_repo_skip_tls_verify", "tkg_image_repo", "tkg_image_repo_hostname", "tkg_use_clusterclass")
 
-#@ if tkg_image_repo_customized():
+#@ if tkg_image_repo_customized() and not tkg_use_clusterclass():
 #@overlay/match by=overlay.subset({"kind":"KubeadmControlPlane"})
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
