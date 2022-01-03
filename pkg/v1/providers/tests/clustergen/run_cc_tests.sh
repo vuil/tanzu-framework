@@ -45,7 +45,7 @@ generate_cluster_configurations() {
       # normalize should not modify the yaml node trees, so doing so before saving to expected to
       # reduce the chance of generating diffs due to template formatting differences in the future.
       normalize /tmp/expected.yaml ${outputdir}/"$t".output
-      ${CLUSTERCTL} alpha normalize-names -r -f /tmp/expected.yaml > ${outputdir}/"$t".norm.output 
+      ${CLUSTERCTL} alpha generate-normalized-topology -r -f /tmp/expected.yaml > ${outputdir}/"$t".norm.output
       echo -n "$t (POS) : "
     else
       # failure to generate a working configuration can be due to a variety of reasons. They are
@@ -59,11 +59,16 @@ generate_cluster_configurations() {
     echo "${cmdargs[@]}"
 
     if [[ $RESULT -eq 0 ]]; then
+      # XXX fixup plan, hard code cluster class
       cat "$t" | perl -pe 's/--plan (\S+)/--plan $1cc/; s/_PLAN: (\S+)/_PLAN: $1cc/' > /tmp/test_tkg_config_cc
+      echo "CLUSTER_CLASS: tkg-cluster-class-dev" >> /tmp/test_tkg_config_cc
       read -r -a cmdargs < <(grep EXE: /tmp/test_tkg_config_cc | cut -d: -f2-)
       echo $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}"
-      $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}" 2>/tmp/err_cc.txt 1>${outputdir}/"$t".cc.output
-      ${CLUSTERCTL} alpha normalize-names -p -f ${outputdir}/"$t".cc.output > ${outputdir}/"$t".cc.norm.output 
+      $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}" 2>/tmp/err_cc.txt 1>/tmp/expected_cc.yaml
+      #normalize_cc /tmp/expected_cc.yaml ${outputdir}/"$t".cc.output
+      cp /tmp/expected_cc.yaml ${outputdir}/"$t".cc.output
+      ${CLUSTERCTL} alpha generate-normalized-topology -p -f ${outputdir}/"$t".cc.output > ${outputdir}/"$t".cc.norm.output
+
       echo wdiff -s ${outputdir}/"$t".norm.output ${outputdir}/"$t".cc.norm.output
       wdiff -s ${outputdir}/"$t".norm.output ${outputdir}/"$t".cc.norm.output | tail -2 | head -1 > ${outputdir}/"$t".diff_stats 
       cat ${outputdir}/"$t".diff_stats 
@@ -74,43 +79,4 @@ generate_cluster_configurations() {
   rm -rf $HOME/.tkg/bom/bom-clustergen-*
 }
 
-diffcluster() {
-  diff "$1" "$2"
-  # TODO : update to use more yaml-aware diff
-  # kapp tools diff -c --line-numbers=false --summary=false --file $1 --file2 $2
-}
-
-check_generated() {
-  # flag new files generated
-  untracked=$(git ls-files -o --directory --exclude-standard .)
-  num_untracked=$(echo -n "${untracked}" | wc -l)
-  if [ "$num_untracked" -ne 0 ]; then
-    echo "New entries found:"
-    echo "$untracked"
-    echo ""
-    echo "The above are new entries from the last test. If these changes are expected, commit them and retry."
-    exit 1
-  fi
-
-  deleted=$(git status -s | grep ' D ' || true)
-  num_deleted=$(echo -n "${deleted}" | wc -l)
-  if [ "$num_deleted" -ne 0 ]; then
-    echo "Deleted entries found:"
-    echo "$deleted"
-    echo ""
-    echo "The above entries have been deleted. If the changes are expected, commit the removal (e.g.  git add -u) and retry."
-    exit 1
-  fi
-
-  relpath=$(git rev-parse --show-prefix)
-  modified=$(git status -s expected/*.yaml | grep ' M ' | cut -c4-)
-  for m in $modified; do
-    git show HEAD:"${relpath}""$m" >/tmp/orig.yaml
-    normalize /tmp/orig.yaml /tmp/orig.normalized.yaml
-    diffcluster /tmp/orig.normalized.yaml "$m"
-  done
-}
-
 generate_cluster_configurations $1
-set -e
-check_generated

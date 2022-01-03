@@ -1,0 +1,34 @@
+#@ load("@ytt:overlay", "overlay")
+#@ load("@ytt:yaml", "yaml")
+
+#@overlay/match by=lambda _,l,r: "annotations" in l["metadata"],expects="0+"
+---
+metadata:
+  #@overlay/match-child-defaults missing_ok=True
+  annotations:
+    #@overlay/remove
+    cluster.x-k8s.io/cloned-from-groupkind:
+    #@overlay/remove
+    cluster.x-k8s.io/cloned-from-name:
+    #@overlay/remove
+    topology.cluster.x-k8s.io/managed-field-paths:
+
+#@overlay/match by=lambda _,l,r: "labels" in l["metadata"],expects="0+"
+---
+metadata:
+  #@overlay/match-child-defaults missing_ok=True
+  labels:
+    #@overlay/remove
+    topology.cluster.x-k8s.io/owned:
+
+#@overlay/match by=lambda _,l,r: "ownerReferences" in l["metadata"],expects="0+"
+---
+metadata:
+  #@overlay/remove
+  ownerReferences:
+
+#@overlay/match by=lambda _,l,r: "resourceVersion" in l["metadata"],expects="0+"
+---
+metadata:
+  #@overlay/remove
+  resourceVersion:
