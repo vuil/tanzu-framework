@@ -79,4 +79,14 @@ generate_cluster_configurations() {
   rm -rf $HOME/.tkg/bom/bom-clustergen-*
 }
 
+compile_diff_stats() {
+   echo "SAME,DELETED,CHANGED" > ${outputdir}/diff_summary.csv
+   for f in ${outputdir}/*.diff_stats; do
+      cat $f | perl -pe 's/^.*\D(\d+)%.*\D(\d+)%.*\D(\d+)%.*$/$1 $2 $3/' >> ${outputdir}/diff_summary.csv
+   done
+   cat ${outputdir}/diff_summary.csv
+   # TODO: compute mean/stddev of columns
+}
+
 generate_cluster_configurations $1
+compile_diff_stats $1
