@@ -2353,7 +2353,7 @@ spec:
         - --leader-elect
         - --metrics-bind-addr=localhost:8080
         - --feature-gates=MachinePool=${EXP_MACHINE_POOL:=false},ClusterTopology=${CLUSTER_TOPOLOGY:=true}
-        image: registry.tkg.vmware.run/cluster-api/capd-manager:${CAPD_CONTROLLER_IMAGE_TAG}
+        image: gcr.io/k8s-staging-cluster-api/capd-manager:v1.1.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

@@ -9688,7 +9688,7 @@ spec:
         - --feature-gates=MachinePool=${EXP_MACHINE_POOL:=false},ClusterResourceSet=${EXP_CLUSTER_RESOURCE_SET:=true},ClusterTopology=${CLUSTER_TOPOLOGY:=true}
         command:
         - /manager
-        image: registry.tkg.vmware.run/cluster-api/cluster-api-controller:${CAPI_CONTROLLER_IMAGE_TAG}
+        image: k8s.gcr.io/cluster-api/cluster-api-controller:v1.1.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
