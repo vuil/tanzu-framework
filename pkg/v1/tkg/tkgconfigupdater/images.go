@@ -123,9 +123,12 @@ func (c *client) getImageMapForConfigFile() (map[string]imageForConfigFile, erro
 
 		image := imageForConfigFile{}
 		image.Repository = repository
-		if configKey == "cert-manager" {
-			image.Tag = imageInfoFromBOM.Tag
-		}
+		image.Tag = imageInfoFromBOM.Tag
+		/*
+			if configKey == "cert-manager" {
+				image.Tag = imageInfoFromBOM.Tag
+			}
+		*/
 		images[configKey] = image
 	}
 
