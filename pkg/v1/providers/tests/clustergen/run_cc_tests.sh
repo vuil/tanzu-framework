@@ -34,11 +34,16 @@ generate_cluster_configurations() {
   pushd "${TESTDATA}"
 
   VNAME=${infra}_CASES
-  CASES=${!VNAME}
+  if [ ! -z "${!VNAME}" ]; then
+     CASES=${!VNAME}
+  fi
 
   if [ -z "$CASES" ]; then
     CASES=$(for i in `grep EXE: *.case | grep -i ${infra}:v | cut -d: -f1 | uniq | cut -d/ -f1 | head -${MAX_CASES_PER_INFRA}`; do echo -n "$i "; done; echo)
+  else
+    CASES=$(for i in `grep EXE: ${CASES} | grep -i ${infra}:v | cut -d: -f1 | uniq | cut -d/ -f1 | head -${MAX_CASES_PER_INFRA}`; do echo -n "$i "; done; echo)
   fi
+  echo "CASES for $infra is $CASES"
 
   docker run -t --rm -v ${TKG_CONFIG_DIR}:${TKG_CONFIG_DIR} -v ${TESTROOT}:/clustergen -w /clustergen -e TKG_CONFIG_DIR=${TKG_CONFIG_DIR} ${BUILDER_IMAGE} /bin/bash -c "./gen_duplicate_bom_azure.py $TKG_CONFIG_DIR"
   RESULT=$?
