@@ -135,7 +135,8 @@ outputdir=$1
 mkdir -p ${TESTDATA}/${outputdir} || true
 rm -rf ${TESTDATA}/${outputdir}/*
 for infra in ${TESTED_INFRAS}; do
-   pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra}"
+   infra_lc = $(echo "$infra" | tr '[:upper:]' '[:lower:]')
+   pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra_lc}"
    for i in `find . -name "cluster-template-definition*cc.yaml"`; do
       perl -pi -e 's@^(.*- path: providers/infrastructure-.*/v.*/)(yttcc)@$1cconly\n$1$2@g' $i
    done
