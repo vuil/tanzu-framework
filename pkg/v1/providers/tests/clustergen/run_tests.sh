@@ -60,7 +60,9 @@ generate_cluster_configurations() {
       # normalize should not modify the yaml node trees, so doing so before saving to expected to
       # reduce the chance of generating diffs due to template formatting differences in the future.
       normalize /tmp/expected.yaml ${outputdir}/"$t".output
-      ${CLUSTERCTL} alpha generate-normalized-topology -r -f /tmp/expected.yaml > ${outputdircc}/"$t".norm.output
+      if [ ! -z "$outputdircc" ]; then
+        ${CLUSTERCTL} alpha generate-normalized-topology -r -f /tmp/expected.yaml > ${outputdircc}/"$t".norm.output
+      fi
       echo -n "$t (POS) : "
     else
       # failure to generate a working configuration can be due to a variety of reasons. They are
@@ -77,7 +79,6 @@ generate_cluster_configurations() {
        if [[ $RESULT -eq 0 ]]; then
          # XXX fixup plan, hard code cluster class
          cat "$t" | perl -pe 's/--plan (\S+)/--plan $1cc/; s/_PLAN: (\S+)/_PLAN: $1cc/' > /tmp/test_tkg_config_cc
-         infra=`echo "$infra" | awk '{ print tolower($1) }'`
          echo "CLUSTER_CLASS: tkg-${infra}-default" >> /tmp/test_tkg_config_cc
          read -r -a cmdargs < <(grep EXE: /tmp/test_tkg_config_cc | cut -d: -f2-)
          echo $TKG --file /tmp/test_tkg_config_cc --configdir ${TKG_CONFIG_DIR} --log_file /tmp/"$t"_cc.log config cluster "${cmdargs[@]}"
@@ -150,7 +151,8 @@ check_generated() {
 # cluster classes
 patch_cluster_templates() {
 for infra in ${SUPPORTED_INFRAS}; do
-   pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra}"
+   infra_lc=`echo "$infra" | awk '{ print tolower($1) }'`
+   pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra_lc}"
    for i in `find . -name "cluster-template-definition*cc.yaml"`; do
       perl -pi -e 's@^(.*- path: providers/infrastructure-.*/v.*/)(yttcc)@$1cconly\n$1$2@g' $i
    done
@@ -182,7 +184,8 @@ fi
 patch_cluster_templates
 
 for infra in ${TESTED_INFRAS}; do
-  generate_cluster_configurations $infra $outputdir $outputdircc
+  infra_lc=`echo "$infra" | awk '{ print tolower($1) }'`
+  generate_cluster_configurations $infra_lc $outputdir $outputdircc
 done
 
 set -e
