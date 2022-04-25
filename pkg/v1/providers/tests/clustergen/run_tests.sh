@@ -57,6 +57,7 @@ generate_cluster_configurations() {
       # reduce the chance of generating diffs due to template formatting differences in the future.
       normalize /tmp/expected.yaml ${outputdir}/"$t".output
       if [ ! -z "$outputdircc" ]; then
+        echo ${CLUSTERCTL} alpha generate-normalized-topology -r -f /tmp/expected.yaml to ${outputdircc}/"$t".norm.output
         ${CLUSTERCTL} alpha generate-normalized-topology -r -f /tmp/expected.yaml > ${outputdircc}/"$t".norm.output
       fi
       echo -n "$t (POS) : "
