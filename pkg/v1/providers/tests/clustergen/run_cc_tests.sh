@@ -102,6 +102,31 @@ generate_cluster_configurations() {
   rm -rf $HOME/.tkg/bom/bom-clustergen-*
 }
 
+# modify the provider cluster templates to reference local directories for
+# cluster classes
+patch_cluster_templates() {
+for infra in ${SUPPORTED_INFRAS}; do
+   infra_lc=`echo "$infra" | awk '{ print tolower($1) }'`
+   pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra_lc}"
+
+   # Name of cluster class file corresponding to the cluster class name used
+   # has to be present in the providers directory.
+   for d in `find . -type d -name "v*"`; do
+      echo "# no-op" > "$d/clusterclass-tkg-${infra_lc}-default.yaml"
+   done
+
+   # Patching cluster template definition to include add the cconly directory
+   # to ytt processing.
+   # Said cconly directory should not be present in the tanzu tkg providers
+   # directory im production.
+   for f in `find . -name "cluster-template-definition*cc.yaml"`; do
+      perl -pi -e 's@^(.*- path: providers/infrastructure-.*/v.*/)(yttcc)@$1cconly\n$1$2@g' $f
+   done
+   popd
+done
+}
+
+
 generate_diff_summary() {
    local outputdir=$1
    local t=$2
@@ -134,8 +159,11 @@ export CLUSTERCTL_SKIP_FETCH_CC=true
 outputdir=$1
 mkdir -p ${TESTDATA}/${outputdir} || true
 rm -rf ${TESTDATA}/${outputdir}/*
+
+patch_cluster_templates
+
 for infra in ${TESTED_INFRAS}; do
-   infra_lc = $(echo "$infra" | tr '[:upper:]' '[:lower:]')
+   infra_lc=$(echo "$infra" | tr '[:upper:]' '[:lower:]')
    pushd "${TKG_CONFIG_DIR}/providers/infrastructure-${infra_lc}"
    for i in `find . -name "cluster-template-definition*cc.yaml"`; do
       perl -pi -e 's@^(.*- path: providers/infrastructure-.*/v.*/)(yttcc)@$1cconly\n$1$2@g' $i
