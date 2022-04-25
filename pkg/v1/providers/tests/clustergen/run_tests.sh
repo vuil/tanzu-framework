@@ -31,13 +31,9 @@ generate_cluster_configurations() {
   local outputdir=$2
   local outputdircc=$3
   pushd "${TESTDATA}"
-  #mkdir -p ${outputdir} || true
-  #rm -rf ${outputdir}/*
-
-  echo "XXXX ($infra) ($outputdir) ($outputdircc)"
 
   matched_cases=$(for i in `grep -H EXE: ${CASES} | grep -i ${infra}:v | cut -d: -f1 | uniq | cut -d/ -f1 | head -${MAX_CASES_PER_INFRA}`; do echo -n "$i "; done; echo)
-  echo "XXXX MATCH CASES = ($matched_cases)"
+  echo "MATCHED CASES = ($matched_cases)"
 
   $TKG get mc --configdir ${TKG_CONFIG_DIR}
   docker run -t --rm -v ${TKG_CONFIG_DIR}:${TKG_CONFIG_DIR} -v ${TESTROOT}:/clustergen -w /clustergen -e TKG_CONFIG_DIR=${TKG_CONFIG_DIR} ${BUILDER_IMAGE} /bin/bash -c "./gen_duplicate_bom_azure.py $TKG_CONFIG_DIR"
