@@ -44,3 +44,4 @@ o clustergen github workflow
 o cc and packaging
 o misc code changes
 o cluster creation and dry-run changes
+o cc-based MC deployment changes
