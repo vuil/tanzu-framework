@@ -40,3 +40,4 @@ Check out Framework's project [Roadmap](ROADMAP.md) and consider contributing!
 o CClass authoring
 o clustergen
 o clustergen cc handling
+o clustergen github workflow
