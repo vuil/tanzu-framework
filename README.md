@@ -41,3 +41,4 @@ o CClass authoring
 o clustergen
 o clustergen cc handling
 o clustergen github workflow
+o cc and packaging
